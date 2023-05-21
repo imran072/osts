@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Check if a file name is provided as an argument
+if [ $# -eq 0 ]; then
+    echo "Error: No input file provided."
+    exit 1
+fi
+
+
+# Extract the column of numbers from the TSV file
+number_string=$(gawk -F'\t' -v col=3 'NR>1 && $col != "" {print $col}' "$1" | tr '\n' ' ')
+
+# Calculate the median
+median=$(gawk -v numbers="$number_string" 'BEGIN {
+    n = split(numbers, arr)
+    asort(arr)
+    if (n % 2 == 0)
+        median = (arr[n/2] + arr[n/2 + 1]) / 2
+    else
+        median = arr[(n + 1) / 2]
+    print median
+}')
+
+# Calculate the median absolute deviation (MAD)
+mad=$(gawk -v numbers="$number_string" -v median="$median" 'BEGIN {
+    n = split(numbers, arr)
+    for (i = 1; i <= n; i++)
+        diff[i] = arr[i] > median ? arr[i] - median : median - arr[i]
+    asort(diff)
+    if (n % 2 == 0)
+        mad = (diff[n/2] + diff[n/2 + 1]) / 2
+    else
+        mad = diff[(n + 1) / 2]
+    print mad
+}')
+
+echo "Median: $median"
+echo "MAD: $mad"
+
