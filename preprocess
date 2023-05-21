@@ -8,22 +8,19 @@ if [[ $# -ne 1 ]]; then
    exit 1
 fi
 
-# Remove any existing cleaned file
-rm -f "$cleaned_file"
 
-# Process the data file using Awk
-awk -F'\t' '
-{
+awk -F'\t' 'BEGIN {OFS="\t"} NR==1 { print $1, $2, $3, "Date_of_Breach", $5, "Month", "Year" }
+NR>1 {
     # Extract start date from range if present
     if ($4 ~ / - / || $4 ~ /- / || $4 ~ / -/ || $4 ~ /-/ ) {
-   	 gsub(/ - /, "-", $4)
-    	gsub(/- /, "-", $4)
-    	gsub(/ -/, "-", $4)
-	gsub(/-/, "-", $4)
-    	split($4, dates, "-")
-    	start_date = dates[1]
+        gsub(/ - /, "-", $4)
+        gsub(/- /, "-", $4)
+        gsub(/ -/, "-", $4)
+        gsub(/-/, "-", $4)
+        split($4, dates, "-")
+        start_date = dates[1]
     } else {
-    	start_date = $4
+        start_date = $4
     }
 
 
@@ -37,17 +34,29 @@ awk -F'\t' '
         day = date[2]
         year = date[3]
         if (length(year) == 2) {
+	    if (year ~ /^9/) {
+	    year = "19" year
+	} else {
             year = "20" year
+	}
         }
         if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1) {
             print "Invalid date:", NR
         } else {
-            start_date = sprintf("%02d/%02d/%s", month, day, year)
+            start_date = sprintf("%d/%d/%s", month, day, year)
         }
     }
 
+    # Make the breach-type more uniform remove everything in field after the first comma or slash
+    if ($5 ~ /[,\\\/]/) {
+	cleaned_breach_type = $5
+        sub(/[,\\\/].*/, "", cleaned_breach_type)
+    } else {
+	 cleaned_breach_type = $5
+    }
+
     # Write the cleaned data to the new file
-    print start_date
-}' "$1"
+    print $1, $2, $3, start_date, cleaned_breach_type, month, year
+}' $1 > Cyber_Security_Breaches_clean.tsv
 
 
