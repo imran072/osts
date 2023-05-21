@@ -30,8 +30,9 @@ NR>1 {
         print "Invalid date:", NR
     } else {
         split(start_date, date, /[\/ -]/)
-        month = date[1]
-        day = date[2]
+        #month = sprintf("%d", date[1])  # Remove leading zeros from month
+        month = date[1] + 0 # remove leading 0 from month
+	day = date[2]
         year = date[3]
         if (length(year) == 2) {
 	    if (year ~ /^9/) {
