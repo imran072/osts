@@ -7,6 +7,71 @@ if [ $# -eq 0 ]; then
 fi
 
 
-# Count the occurrences of each month using awk
-awk -F'\t' 'NR>1 { count[$6]++ } END { for (Month in count) print Month, count[Month] }' "$1"
+filename="$1"
+
+# Store the sorted values of the count column in a variable
+sorted_values=$(tail -n +2 "$filename" | sort -t $'\t' -k6 -n | cut -f6 | sort | uniq -c | sort -n -k1 | awk '{ values = values $1 " " } END { print values }')
+
+# Split the sorted_values string into an array
+read -ra values_array <<< "$sorted_values"
+
+# Calculate the total number of values
+total_values=${#values_array[@]}
+
+# Calculate the index of the median value
+mid_index=$((total_values / 2))
+
+if ((total_values % 2 == 0)); then
+    # Calculate the median for an even number of values
+    median=$(( (values_array[mid_index - 1] + values_array[mid_index]) / 2 ))
+else
+    # Calculate the median for an odd number of values
+    median=${values_array[mid_index]}
+fi
+
+mad=0
+for value in "${values_array[@]}"; do
+    abs_diff=$((value - median))
+    abs_diff=${abs_diff#-}  # Get absolute value (remove the negative sign if present)
+    mad=$((mad + abs_diff))
+done
+
+mad=$((mad / total_values))
+
+echo "Median: $median"
+echo "MAD: $mad"
+echo "------------------------"
+
+# Create an array to map numeric month values to month names
+declare -a month_names=(
+    "Jan" "Feb" "Mar" "Apr" "May" "Jun"
+    "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"
+)
+
+# Count the occurrences of each month using awk and print month names
+awk -F'\t' -v month_names="${month_names[*]}" -v median="$median" -v mad="$mad" '
+    BEGIN {
+        split(month_names, months, " ")
+    }
+    NR > 1 {
+        month = sprintf("%02d", $6)
+        count[month] += 1
+    }
+    END {
+        for (i = 1; i <= 12; i++) {
+            month = sprintf("%02d", i)
+            if (count[month]) {
+                diff = count[month] - median
+                if (diff > 0) {
+                    indicator = "++"
+                } else if (diff < 0) {
+                    indicator = "--"
+                } else {
+                    indicator = ""
+                }
+                printf "%s %s %s\n", months[i], count[month], indicator
+            }
+        }
+    }
+' "$filename"
 
