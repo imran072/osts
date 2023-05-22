@@ -50,9 +50,7 @@ declare -a month_names=(
 
 # Count the occurrences of each month using awk and print month names
 awk -F'\t' -v month_names="${month_names[*]}" -v median="$median" -v mad="$mad" '
-    BEGIN {
-        split(month_names, months, " ")
-    }
+    BEGIN { split(month_names, months, " ") }
     NR > 1 {
         month = sprintf("%02d", $6)
         count[month] += 1
@@ -60,17 +58,15 @@ awk -F'\t' -v month_names="${month_names[*]}" -v median="$median" -v mad="$mad" 
     END {
         for (i = 1; i <= 12; i++) {
             month = sprintf("%02d", i)
-            if (count[month]) {
-                diff = count[month] - median
-                if (diff > 0) {
-                    indicator = "++"
-                } else if (diff < 0) {
-                    indicator = "--"
-                } else {
-                    indicator = ""
-                }
-                printf "%s %s %s\n", months[i], count[month], indicator
+            diff = count[month] - median
+            if (diff > mad) {
+                indicator = "++"
+            } else if (diff < -mad) {
+                indicator = "--"
+            } else {
+                indicator = ""
             }
+            printf "%s %s %s\n", months[i], count[month] + 0, indicator
         }
     }
 ' "$filename"
