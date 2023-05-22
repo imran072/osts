@@ -2,13 +2,14 @@
 
 # author_name: Kazi Md Imran ID: 23846485
 
+# check if a file is passed or not
 if [[ $# -ne 1 ]]; then
    echo "Error: command is not complete. Expecting a data file to be passed."
    echo "Please recall the script!"
    exit 1
 fi
 
-
+# reading file and selecting the required column
 awk -F'\t' 'BEGIN {OFS="\t"} NR==1 { print $1, $2, $3, "Date_of_Breach", $5, "Month", "Year" }
 NR>1 {
     # Extract start date from range if present
@@ -44,7 +45,7 @@ NR>1 {
         }
         if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1) {
             print "Invalid date:", NR
-	    next
+	    next # skip if error found
         } else {
             start_date = sprintf("%d/%d/%s", month, day, year)
         }

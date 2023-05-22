@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+ #author_name: Kazi Md Imran ID: 23846485
+
 # Check if a file name is provided as an argument
 if [ $# -eq 0 ]; then
     echo "Error: No input file provided."
@@ -10,18 +12,18 @@ fi
 filename="$1"
 
 # Store the sorted values of the count column in a variable
-sorted_values=$(tail -n +2 "$filename" | sort -t $'\t' -k6 -n | cut -f6 | sort | uniq -c | sort -n -k1 | awk '{ values = values $1 " " } END { print values }')
+sorted_month=$(tail -n +2 "$filename" | sort -t $'\t' -k6 -n | cut -f6 | sort | uniq -c | sort -n -k1 | awk '{ values = values $1 " " } END { print values }')
 
-# Split the sorted_values string into an array
-read -ra values_array <<< "$sorted_values"
+# Split the sorted_month string into an array
+read -ra values_array <<< "$sorted_month"
 
 # Calculate the total number of values
-total_values=${#values_array[@]}
+total_no_values=${#values_array[@]}
 
 # Calculate the index of the median value
-mid_index=$((total_values / 2))
+mid_index=$((total_no_values / 2))
 
-if ((total_values % 2 == 0)); then
+if ((total_no_values % 2 == 0)); then
     # Calculate the median for an even number of values
     median=$(( (values_array[mid_index - 1] + values_array[mid_index]) / 2 ))
 else
@@ -36,7 +38,7 @@ for value in "${values_array[@]}"; do
     mad=$((mad + abs_diff))
 done
 
-mad=$((mad / total_values))
+mad=$((mad / total_no_values))
 
 echo "Median: $median"
 echo "MAD: $mad"
